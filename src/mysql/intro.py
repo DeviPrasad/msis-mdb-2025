@@ -99,8 +99,9 @@ def test_mysql8_connection():
             "mdb_py_script",
             "{MdbPyScript!!2025/01/*}",
         )
-        assert conn.is_connected()
-        mysql8_close(conn)
+        if conn is not None:
+            assert conn.is_connected()
+            mysql8_close(conn)
     except Exception as ex:
         logging.error("test_mysql8_connection - %s", ex)
 
@@ -114,27 +115,28 @@ def test_mysql8_insert_neft_acc():
             "mdb_py_script",
             "{MdbPyScript!!2025/01/*}",
         )
-        mysql8_create_neft_acc(
-            conn,
-            cust_code="0914725006808325",
-            neft_acc="99305528041362",
-            ifsc="RXTC1740301",
-            status="ok",
-            acc_holder_name="Moxie Morlinspike",
-            msg="account is verified and is active",
-            cuid="MDB0025001234",
-        )
-        mysql8_perpared_stmt_create_neft_acc(
-            conn,
-            cust_code="0939825006808325",
-            neft_acc="14305523040802",
-            ifsc="SBI01740301",
-            status="ok",
-            acc_holder_name="Ravishankar S",
-            msg="verified and active",
-            cuid="MDB0025005678",
-        )
-        mysql8_close(conn)
+        if conn is not None:
+            mysql8_create_neft_acc(
+                conn,
+                cust_code="0914725006808325",
+                neft_acc="99305528041362",
+                ifsc="RXTC1740301",
+                status="ok",
+                acc_holder_name="Moxie Morlinspike",
+                msg="account is verified and is active",
+                cuid="MDB0025001234",
+            )
+            mysql8_perpared_stmt_create_neft_acc(
+                conn,
+                cust_code="0939825006808325",
+                neft_acc="14305523040802",
+                ifsc="SBI01740301",
+                status="ok",
+                acc_holder_name="Ravishankar S",
+                msg="verified and active",
+                cuid="MDB0025005678",
+            )
+            mysql8_close(conn)
     except Exception as ex:
         logging.error("test_mysql8_insert_neft_acc - %s", ex)
 

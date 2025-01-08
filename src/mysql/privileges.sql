@@ -9,9 +9,10 @@ REVOKE DELETE ON *.* FROM 'mdb_py_script'@'multicore.in';
 REVOKE DROP ON *.* FROM 'mdb_py_script'@'multicore.in';
 REVOKE SHUTDOWN ON *.* FROM 'mdb_py_script'@'multicore.in';
 
-GRANT INSERT ON *.* TO 'mdb_py_script'@'multicore.in';
 
 GRANT SELECT, SHOW VIEW, PROCESS ON *.* TO 'mdb_py_script'@'multicore.in';
 GRANT CREATE TEMPORARY TABLES ON *.* TO 'mdb_py_script'@'multicore.in';
+
+GRANT INSERT ON *.* TO 'mdb_py_script'@'multicore.in';
 
 flush privileges;

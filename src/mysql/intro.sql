@@ -7,6 +7,8 @@ flush privileges;
 
 $ mysql --user 'mdb_py_script' -p'{MdbPyScript!!2025/01/*}' --host 'multicore.in' --port 41526 -D'mdb_intro'
 
+drop user 'mdb_py_script'@'multicore.in';
+
 
 drop table if exists cust_neft_acc;
 create table cust_neft_acc(
