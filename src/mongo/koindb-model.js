@@ -3,6 +3,7 @@ MongoDB - mongosh Methods
 https://www.mongodb.com/docs/manual/reference/method/
 
 https://www.mongodb.com/docs/manual/reference/method/#connection
+https://www.mongodb.com/docs/manual/tutorial/query-documents/
 
 let koin = db.getMongo().startSession({ retryWrites: true, causalConsistency: true }).getDatabase("koinDB");
 
@@ -97,7 +98,7 @@ koin.loan_purpose_param.countDocuments()
 function getLoanPurposeParamForRate(appDB, rate) {
     let params = [];
 
-    const cursor = appDB,.loan_purpose_param.find();
+    const cursor = appDB.loan_purpose_param.find();
     while (cursor.hasNext()) {
         const p = cursor.next();
         if (p.rateOfInterest >= rate) {
