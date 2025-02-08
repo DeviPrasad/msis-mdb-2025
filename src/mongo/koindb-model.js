@@ -118,13 +118,13 @@ koin.loan_purpose_param.countDocuments()
 
 
 
-koin.loan_parties.drop()
-koin.createCollection("loan_parties", {
+koin.loan_agreements.drop()
+koin.createCollection("loan_agreements", {
     validator: {
         $jsonSchema: {
-            required: ["loanId", "lenders", "borrower", "agreementDate"],
+            required: ["loan_id", "lenders", "borrower", "agreement_date"],
             properties: {
-                loanId: {
+                loan_id: {
                     bsonType: "int",
                     minimum: 240000001,
                     maximum: 279999999
@@ -137,11 +137,24 @@ koin.createCollection("loan_parties", {
                     additionalProperties: false,
                     items: {
                         bsonType: ["object"],
-                        required: ["id"],
+                        required: ["id", "amount_contributed", "disbursed", "status", "amount_received"],
                         additionalProperties: false,
                         properties: {
                             id: {
-                                bsonType: "binData"
+                                bsonType: "binData" // notice binary data
+                            },
+                            amount_contributed: {
+                                bsonType: "int",
+                                minimum: 2000,
+                            },
+                            disbursed: {
+                                bsonType: "bool"
+                            },
+                            status: {
+                                enum: ['active', 'closed', 'on_hold'],
+                            },
+                            amount_received: {
+                                bsonType: "decimal"
                             }
                         }
                     }
@@ -149,7 +162,7 @@ koin.createCollection("loan_parties", {
                 borrower: {
                     bsonType: "binData"
                 },
-                agreementDate: {
+                agreement_date: {
                     bsonType: "date"
                 }
             }
@@ -158,53 +171,96 @@ koin.createCollection("loan_parties", {
 })
 
 koin.getCollectionInfos()
-koin.getCollectionInfos({ name: 'loan_parties' })
+koin.getCollectionInfos({ name: 'loan_agreements' })
 
 
-koin.loan_parties.deleteMany({})
-koin.loan_parties.insertMany([
+koin.loan_agreements.deleteMany({})
+
+koin.loan_agreements.insertOne({
+    _id: 250000050,
+    loan_id: 250000050,
+    lenders: [
+        {
+            id: UUID('422ed138-9013-45a8-a349-b5101a498362'),
+            amount_contributed: 10000,
+            disbursed: true,
+            status: "active",
+            amount_received: NumberDecimal('1000.80')
+        }
+    ],
+    borrower: UUID('e97e3c8a-3972-4f07-bc43-e1e21e7f8244'),
+    agreement_date: new Date("2024-03-10T15:30:10.234Z")
+})
+
+koin.loan_agreements.countDocuments()
+
+koin.loan_agreements.insertMany([
     {
         _id: 250000100,
-        loanId: 250000100,
+        loan_id: 250000100,
         lenders: [
             {
-                id: UUID('a86620b7-5d47-49a2-a45e-237ffcce5987')
+                id: UUID('a86620b7-5d47-49a2-a45e-237ffcce5987'),
+                amount_contributed: 7300,
+                disbursed: true,
+                status: "active",
+                amount_received: NumberDecimal('545.17')
             },
             {
-                id: UUID('613ec765-a62d-40b7-a42e-f8246203594a')
+                id: UUID('613ec765-a62d-40b7-a42e-f8246203594a'),
+                amount_contributed: 5200,
+                disbursed: true,
+                status: "active",
+                amount_received: NumberDecimal('300')
             },
             {
-                id: UUID('dca9e2cd-ffe2-4010-b3cd-15e130deb087')
+                id: UUID('dca9e2cd-ffe2-4010-b3cd-15e130deb087'),
+                amount_contributed: 10000,
+                disbursed: true,
+                status: "active",
+                amount_received: NumberDecimal('3250.68')
             }
         ],
         borrower: UUID('b5f13225-15c8-4ed2-a2f3-a8fa26c90df3'),
-        agreementDate: new Date("2024-11-20T15:30:10.234Z")
+        agreement_date: new Date("2024-11-20T15:30:10.234Z")
     },
+
     {
         _id: 250000302,
-        loanId: 250000302,
+        loan_id: 250000302,
         lenders: [
             {
-                id: UUID('613ec765-a62d-40b7-a42e-f8246203594a')
+                id: UUID('613ec765-a62d-40b7-a42e-f8246203594a'),
+                amount_contributed: 10000,
+                disbursed: true,
+                status: "closed",
+                amount_received: NumberDecimal('7310.80')
             }
         ],
         borrower: UUID('b5f13225-15c8-4ed2-a2f3-a8fa26c90df3'),
-        agreementDate: new Date("2024-11-20T15:30:10.234Z")
+        agreement_date: new Date("2024-11-20T15:30:10.234Z")
     },
+
     {
         _id: 251000400,
-        loanId: 251000400,
+        loan_id: 251000400,
         lenders: [
             {
-                id: UUID('dca9e2cd-ffe2-4010-b3cd-15e130deb087')
+                id: UUID('dca9e2cd-ffe2-4010-b3cd-15e130deb087'),
+                amount_contributed: 25000,
+                disbursed: false,
+                status: "on_hold",
+                amount_received: NumberDecimal('0')
             }
         ],
         borrower: UUID('b5f13225-15c8-4ed2-a2f3-a8fa26c90df3'),
-        agreementDate: new Date("2024-11-20T15:30:10.234Z")
+        agreement_date: new Date("2024-11-20T15:30:10.234Z")
     },
 ])
 
-koin.loan_parties.find({})
+koin.loan_agreements.find({})
+koin.loan_agreements.estimatedDocumentCount()
+koin.loan_agreements.countDocuments()
 
 
 
