@@ -27,8 +27,10 @@ def init_logger(name):
 class MongoDB:
     def __init__(self, url, port):
         self.mcl = None
+        self.session = None
         try:
             self.mcl = pymongo.MongoClient(url + ":" + str(port))
+            self.session = self.mcl.start_session(causal_consistency=True)
             logger.info("KoinDB connection opened")
         except Exception as ex:
             logger.error("MongoDB connection: %s" % str(ex))
@@ -73,23 +75,29 @@ class KoinDB(MongoDB):
         return self.db.loan_agreements
 
     def get_loan_agreement(self, loan_id):
-        return self.db.loan_agreements.find_one({"_id": loan_id})
+        return self.db.loan_agreements.find_one(
+            {"_id": loan_id}, session=self.session, skip=0
+        )
 
     def create_new_loan_agreement(self, agreement):
         try:
-            self.db.loan_agreements.insert_one(bson.BSON.encode(agreement.to_dict()))
+            logger.info("create_new_loan_agreement - 1 %s" % agreement.to_dict())
+            self.db.loan_agreements.insert_one(
+                bson.BSON.encode(agreement.to_dict()), session=self.session
+            )
+            # self.db.loan_agreements.insert_one((agreement.to_dict()))
+            logger.info("create_new_loan_agreement - 2")
         except Exception as ex:
             logger.error("create_new_loan_agreement : {}" % ex)
-        # logger.info("loan_agreement", self.get_loan_agreements())
 
 
 class LoanLender:
-    def __init__(self, lender):
-        self.id = UUID(bytes=lender["id"])
-        self.amount_contributed = lender["amount_contributed"]
-        self.disbursed = lender["disbursed"]
-        self.status = lender["status"]
-        self.amount_received = lender["amount_received"]
+    def __init__(self, bson_lender):
+        self.id = UUID(bytes=bson_lender["id"])
+        self.amount_contributed = bson_lender["amount_contributed"]
+        self.disbursed = bson_lender["disbursed"]
+        self.status = bson_lender["status"]
+        self.amount_received = bson_lender["amount_received"]
 
     def add_amount_received(self, amt):
         amount = Decimal(amt)
@@ -138,9 +146,10 @@ class LoanAgreement:
         except:
             raise Exception("LoanAgreement: deserialization failed {}", mongo_agreement)
 
-    def __str__(self):
+    def to_pretty_str(self):
         return (
-            "\t(id: {},\n\t date: {},\n\t borrower_id: {}, \n\t lenders: {}, )".format(
+            "\t(_id: {},\n\t date: {},\n\t borrower_id: {}, \n\t lenders: {}, )".format(
+                self.loan_id,
                 self.loan_id,
                 str(self.agreement_date),
                 self.borrower,
@@ -148,8 +157,22 @@ class LoanAgreement:
             )
         )
 
+    def __str__(self):
+        return "(_id: {},loan_id: {},agreement_date: {},borrower_id: {},lenders: {})".format(
+            self.loan_id,
+            self.loan_id,
+            str(self.agreement_date),
+            self.borrower,
+            self.lenders,
+        )
+
     def to_dict(self):
-        return {"loan_id": self.loan_id, "lenders": [], "borrower": self.borrower}
+        return {
+            "loan_id": self.loan_id,
+            "borrower": self.borrower,
+            "lenders": self.lenders,
+            "agreement_date": self.agreement_date,
+        }
 
 
 def test_get_loan_agreement(kdb):
@@ -166,6 +189,7 @@ def test_create_loan_agreement(kdb):
     loan_agreement.loan_id = 259000999
     loan_agreement.borrower_id = "540b39ee-f53b-4723-af4f-65353a62265d"
     kdb.create_new_loan_agreement(loan_agreement)
+    logger.error("Trying to print")
     print(loan_agreement)
 
 
