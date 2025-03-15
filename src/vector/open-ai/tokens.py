@@ -8,6 +8,8 @@ $ pip install tiktoken
     tiktoken-0.9.0
 $ pip install openai
     openai-1.66.3
+$ pip install numpy
+    numpy-2.2.3
 """
 
 """
