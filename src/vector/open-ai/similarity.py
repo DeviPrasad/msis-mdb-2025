@@ -29,7 +29,7 @@ def embed_loop_text(cl):
 
 def embed_text(cl, text):
     resp = cl.embeddings.create(input=text, model="text-embedding-3-small")
-    return resp.data[0].embedding
+    return (resp, resp.data[0].embedding)
 
 
 def embed_query_prime_number(cl):
@@ -48,11 +48,34 @@ def cosine_similarity(v1, v2):
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
 
+def test_cs_edu(cl):
+    _, edu_embedding = embed_text(
+        cl,
+        "university computer-science undergraduate-degree programming engineering systems-development professors researchers programmers AI ML neural networks linear algebra",
+    )
+    edu_vec = np.array(edu_embedding)
+    sub_names = "distributed-systems programming software algorithms data structures machine learning operating-systems vector-databases OpenAI "
+    sub_embed_resp, sub_embedding = embed_text(
+        cl,
+        sub_names,
+    )
+    alg_vec = np.array(sub_embedding)
+    print(f"cs-education: {cosine_similarity(edu_vec, alg_vec)}")  # 0.6441489438955207
+    # print(sub_embed_resp)
+
+    import tiktoken
+
+    enc = tiktoken.get_encoding("cl100k_base")
+    token_ids = enc.encode(sub_names)
+    print(token_ids)
+    print([enc.decode_single_token_bytes(token_id) for token_id in token_ids])
+
+
 def check_similarity(cl):
     py_code_embedding = embed_loop_text(cl)
-    loop_embedding = embed_text(cl, "code executing a loop")
+    _, loop_embedding = embed_text(cl, "code executing a loop")
     prime_num_embedding = embed_query_prime_number(cl)
-    iteration_embedding = embed_text(cl, "iteration")
+    _, iteration_embedding = embed_text(cl, "iteration")
 
     py_code_vec = np.array(py_code_embedding)
     loop_vec = np.array(loop_embedding)
@@ -70,10 +93,6 @@ def check_similarity(cl):
 
     print(f"self-similar: {cosine_similarity(loop_vec, loop_vec)}")
 
-    print(
-        f"opposites: {cosine_similarity(np.array(embed_text(cl, 'beautiful')), np.array(embed_text(cl, 'extremely ugly')))}"
-    )
-
 
 def test_openai_embeddings():
     client = OpenAI(
@@ -81,6 +100,7 @@ def test_openai_embeddings():
             "OPENAI_API_KEY", "<your OpenAI API key if not set as an env var>"
         )
     )
+    test_cs_edu(client)
     check_similarity(client)
 
 
@@ -109,5 +129,16 @@ def test_cosine_similarity():
     )
 
 
+def test_vector_product():
+    assert np.dot([0.2, 0.7, 0.8, 0.7], [0.5, 0.5, 0.5, 0.5]) == (
+        0.1 + 0.35 + 0.4 + 0.35
+    )
+    assert np.dot(
+        [0.892, -0.3657, 0.9888, 0.72139244], [0.126, 0.462, 0.03, 0.99]
+    ) == np.float64(0.6872811156)
+
+
 if __name__ == "__main__":
+    test_openai_embeddings()
+    test_vector_product()
     test_cosine_similarity()
