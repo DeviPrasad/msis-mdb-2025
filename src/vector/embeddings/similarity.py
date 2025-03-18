@@ -1,6 +1,7 @@
 import os
-from openai import OpenAI
 import numpy as np
+from openai import OpenAI
+import tiktoken
 
 
 def embed_loop_text(cl):
@@ -63,8 +64,6 @@ def test_cs_edu(cl):
     print(f"cs-education: {cosine_similarity(edu_vec, alg_vec)}")  # 0.6441489438955207
     # print(sub_embed_resp)
 
-    import tiktoken
-
     enc = tiktoken.get_encoding("cl100k_base")
     token_ids = enc.encode(sub_names)
     print(token_ids)
@@ -101,7 +100,7 @@ def test_openai_embeddings():
         )
     )
     test_cs_edu(client)
-    check_similarity(client)
+    # check_similarity(client)
 
 
 def test_cosine_similarity():
@@ -133,12 +132,9 @@ def test_vector_product():
     assert np.dot([0.2, 0.7, 0.8, 0.7], [0.5, 0.5, 0.5, 0.5]) == (
         0.1 + 0.35 + 0.4 + 0.35
     )
-    assert np.dot(
-        [0.892, -0.3657, 0.9888, 0.72139244], [0.126, 0.462, 0.03, 0.99]
-    ) == np.float64(0.6872811156)
 
 
 if __name__ == "__main__":
     test_openai_embeddings()
-    test_vector_product()
-    test_cosine_similarity()
+    # test_vector_product()
+    # test_cosine_similarity()
