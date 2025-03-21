@@ -1,0 +1,13 @@
+Manipal School of Information Sciences
+Modern Databases for Big Data (BDA 5202)
+Feb-2025
+
+Assignment 3.
+
+(1) For the IFSC master data available at course github repo define MongoDB collections and documents.
+(2) Write pymongo code to import the records into MongoDB collections.
+
+
+Github repo location:
+https://github.com/DeviPrasad/msis-mdb-2025/tree/main/assignments/lab01-intro-rdb
+
