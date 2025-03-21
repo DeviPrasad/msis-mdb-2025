@@ -1,0 +1,12 @@
+Manipal School of Information Sciences
+Modern Databases for Big Data (BDA 5202)
+Feb-2025
+
+Assignment 2.
+
+For the P2P Lending System discussed during the lectures, define MongoDB collections and documents.
+
+Implement the following using PyMongo:
+(1) Create a new loan instance
+(2) Write queries to search for a Loan Account detail given LoanId
+

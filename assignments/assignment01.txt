@@ -1,0 +1,19 @@
+Manipal School of Information Sciences
+Modern Databases for Big Data (BDA 5202)
+Feb-2025
+
+Assignment 1.
+
+Define MySQL database, and import the data from the following MS Excel files stored in the course github repo location:
+https://github.com/DeviPrasad/msis-mdb-2025/tree/main/assignments/lab01-intro-rdb
+
+These documents contain the IFSC master data as provided by the Reserve Bank of India.
+
+You are required to:
+(1) Create a MySQL database.
+(2) Define the schema for necessary tables.
+(3) Import the data (more than a lakh records) into these tables.
+(4) Define necessary indexes to speed up IFSC lookup.
+
+Define a host of SQL queries and ensure your data is correctly imported.
+
