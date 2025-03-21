@@ -1,0 +1,78 @@
+### Assignment: Database Design and Querying
+
+#### Objective:
+
+Design and implement a relational database for a Fintech application using MySQL. 
+Create relevant tables, establish appropriate indexing strategies, and formulate queries.
+
+#### Database Requirements:
+
+**Create at least five interconnected tables representing:**
+
+1. **Users**
+
+   - `user_id` (PK)
+   - `first_name`
+   - `last_name`
+   - `email` (Unique)
+   - `date_of_birth`
+   - `registration_date`
+
+2. **Accounts**
+
+   - `account_id` (PK)
+   - `user_id` (FK to Users)
+   - `account_type` (e.g., savings, checking, brokerage)
+   - `balance`
+   - `currency`
+   - `created_at`
+
+3. **Transactions**
+
+   - `transaction_id` (PK)
+   - `account_id` (FK to Accounts)
+   - `amount`
+   - `transaction_type` (credit/debit)
+   - `transaction_date`
+   - `description`
+
+4. **Loans**
+
+   - `loan_id` (PK)
+   - `user_id` (FK to Users)
+   - `loan_amount`
+   - `interest_rate`
+   - `loan_term_months`
+   - `loan_start_date`
+   - `loan_status` (active, closed, defaulted)
+
+#### Index Requirements:
+
+- Users: Index on `email`.
+- Accounts: Index on `user_id`, `account_type`.
+- Transactions: Index on `account_id`, `transaction_date`.
+- Investments: Index on `account_id`, `investment_type`.
+- Loans: Index on `user_id`, `loan_status`.
+
+#### Queries (Reasoning-focused):
+
+Write SQL queries to answer the following:
+
+1. **High-Value Clients:**
+
+   - Find users whose combined balance across all accounts exceeds Rs. 100,000.
+
+
+#### Deliverables:
+
+- SQL scripts to create tables and indexes.
+- SQL scripts for the queries listed above.
+- A brief report (1-2 pages) describing your indexing strategy and explaining your reasoning behind query optimization.
+
+#### Submission Guidelines:
+
+- Submit scripts and report as a single zipped file.
+- Include comments in your SQL scripts for clarity.
+
+
+
