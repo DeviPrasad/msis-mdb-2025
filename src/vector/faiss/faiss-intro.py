@@ -18,23 +18,102 @@ import numpy as np
 import faiss
 
 
-def hnsw_populate(n):
+def print_faiss_hnsw_structure(index):
+    max_level = index.hnsw.max_level
+    ntotal = index.ntotal
+    entry_point = index.hnsw.entry_point
+
+    print(f"Max level: {max_level}")
+    print(f"Total vectors: {ntotal}")
+    print(f"Entry point: {entry_point}, vector: {index.reconstruct(entry_point)}")
+
+
+def test_hnsw_exp_decay():
+    M = 16
+    D = 2
+    np.random.seed()
+    index = faiss.IndexHNSWFlat(D, M)
+    node_data = [
+        (3, [3.0, 0.0]),
+        (8, [8.0, 0.0]),
+        (4, [4.0, 0.0]),
+        (5, [5.0, 0.0]),
+        (11, [11.0, 0.0]),
+        (6, [6.0, 1.0]),
+        (2, [2.0, 0.0]),
+        (7, [7.0, 0.0]),
+        (9, [9.0, 0.0]),
+        (10, [10.0, 0.0]),
+        (12, [12.0, 0.0]),
+        (13, [13.0, 0.0]),
+        (14, [14.0, 0.0]),
+        (1, [1.0, 0.0]),
+        (20, [20.0, 0.0]),
+        (30, [30.0, 0.0]),
+    ]
+
+    vectors = []
+    for _, vec in node_data:
+        vectors.append(vec)
+    x = np.array((vectors)).astype(np.float32)
+    index.add(x)
+    print(
+        f"test_hnsw_exp_decay: max_level {index.hnsw.max_level}, index total {index.ntotal}"
+    )
+    # print the HNSW structure.
+    print_faiss_hnsw_structure(index)
+    xq = np.array(([[0.8, 0]])).astype(np.float32)
+    D, I = index.search(xq, 4)
+    print(D, I)
+
+
+test_hnsw_exp_decay()
+
+
+def hnsw_populate_random(n):
     M = 8
     D = 2
     np.random.seed()
     index = faiss.IndexHNSWFlat(D, M)
     population = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     index.hnsw.reset()
-    print(f"max_level {index.hnsw.max_level}, index total {index.ntotal}")
+    max_level = index.hnsw.max_level
+    print(f"hnsw_populate_random: max_level {max_level}, index total {index.ntotal}")
+    for i in range(n):
+        index.add(np.random.random((1, D)).astype(np.float32))
+    print(population)
+    max_level = index.hnsw.max_level
+    print(f"hnsw_populate_random: max_level {max_level}, index total {index.ntotal}")
+
+    entry_point = index.hnsw.entry_point
+    print(f"\tLevel {max_level}: 1 element (entry point {entry_point})")
+    entry_vector = index.reconstruct(entry_point)
+    print(f"\t\tVector: {entry_vector}")
+
+
+hnsw_populate_random(1024 * 32)
+
+
+def test_faiss_exp_decay_fn(n):
+    M = 16
+    D = 2
+    np.random.seed()
+    index = faiss.IndexHNSWFlat(D, M)
+    population = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    index.hnsw.reset()
+    print(
+        f"test_faiss_exp_decay_fn: max_level {index.hnsw.max_level}, index total {index.ntotal}"
+    )
     for i in range(n):
         l = index.hnsw.random_level()
         population[l] += 1
-        index.add(np.random.random((1, D)).astype(np.float32))
     print(population)
-    print(f"max_level {index.hnsw.max_level}, index total {index.ntotal}")
+    print(
+        f"ftest_faiss_exp_decay_fn: max_level {index.hnsw.max_level}, index total {index.ntotal}"
+    )
 
 
-hnsw_populate(1024 * 8)
+# test_faiss_exp_decay_fn(1024 * 5)
 
 """
 M = 8

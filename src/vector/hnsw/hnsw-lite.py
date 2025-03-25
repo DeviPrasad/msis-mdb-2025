@@ -73,7 +73,6 @@ class HNSW:
         np.random.seed()
         return HNSW(M, layer0_M, efConstruction, L)
 
-    # for demo purposes, call 'create_random_nodes' and 'populate' in sequence.
     def create_random_nodes(self, num_nodes, vector_dim):
         assert num_nodes > 0
         assert vector_dim > 0
@@ -151,7 +150,6 @@ class HNSW:
             # Use Mmax for layer 0; otherwise use M.
             M_param = self.Mmax if level == 0 else self.M
             neighbors = self.select_neighbors_heuristic(candidate_list, M_param, q)
-            print(f"inspecting {q} for {level} {q.neighbors} {neighbors}")
             q.neighbors[level] = neighbors
             # Add bidirectional links.
             for neighbor in neighbors:
@@ -180,15 +178,11 @@ class HNSW:
             assert isinstance(d, int)
         max(neighbors, key=lambda x: x[1])[1]
 
-    # -------------------------------------------------------------------------
     # Algorithm 2: SEARCH_LAYER(q, ep, ef, level)
-    # -------------------------------------------------------------------------
     def search_layer(self, q, ep, ef, level):
         """
-        Search for the nearest neighbors of query node q starting from entry point ep
-        at a given layer.
-
-        Returns a list of nodes sorted by distance to q.
+        searches for the nearest neighbors of query node q starting from entry point ep.
+        returns a list of nodes sorted by distance to q.
         """
         visited = set()
         candidate_list = []
@@ -226,9 +220,7 @@ class HNSW:
                         candidate_list = sorted(candidate_list, key=lambda x: x[1])
         return [node for (node, d) in sorted(nearest_neighbors, key=lambda x: x[1])]
 
-    # -------------------------------------------------------------------------
     # Algorithm 4: SELECT_NEIGHBORS_HEURISTIC(candidate_list, M, q)
-    # -------------------------------------------------------------------------
     def select_neighbors_heuristic(self, candidate_list, M, q):
         """
         Select up to M neighbors from candidate_list using the heuristic described in the paper.
@@ -255,9 +247,6 @@ class HNSW:
     # Algorithm 5: K_NN_SEARCH(q, k, ef)
     # -------------------------------------------------------------------------
     def knn_search(self, q, k, ef):
-        """
-        Search for the k nearest neighbors of query node q.
-        """
         cur_ep = self.entry_point
         # Greedy descent: from the top layer down to layer 1.
         for level in range(self.max_level, 0, -1):
@@ -269,18 +258,15 @@ class HNSW:
         return candidate_list[:k]
 
 
-def test_knn_search(hnsw, vec_dim, k, ef):
+def test_knn_search(hnsw, dim, k, ef):
     """
-    Run a demo of the HNSW algorithm with specified hyperparameters.
-
-    Parameters:
-      vec_dim  -- Dimensionality of each node's vector.
-      k           -- Number of nearest neighbors to search for.
-      ef          -- Candidate list size during search at layer 0 (efSearch).
+    dim  -- vector dimension
+    k    -- number of nearest neighbors to search
+    ef   -- exploration factor
     """
 
     # Create a random query node.
-    query_vector = np.random.rand(vec_dim)
+    query_vector = np.random.rand(dim)
     query_node = Node(id="query", vector=query_vector, level=0)
 
     # Perform k-NN search.
@@ -294,26 +280,18 @@ def test_knn_search(hnsw, vec_dim, k, ef):
 
 
 def test_randomized_vectors_hnsw():
-    # parameters in the spirit of pgvector:
     M = 16
     L = 5
     layer0_M = 32
     efConstruction = 200
 
-    # Other parameters for the demo.
     num_nodes = 1024 * 1024  # Number of nodes in the index.
-    vec_dim = 2  # Dimensionality of the vectors.
-    k = 3  # Number of nearest neighbors to search for.
-    ef = 10  # Candidate list size during search (efSearch).
-    seed = 42  # Random seed for reproducibility.
 
+    dim = 2  # vector dimension
     hnsw = HNSW.new(M, layer0_M, efConstruction, L)
     # hnsw = HNSW.with_seeded_prng(M, layer0_M, efConstruction, L, seed)
-    nodes = hnsw.create_random_nodes(num_nodes, vec_dim)
+    nodes = hnsw.create_random_nodes(num_nodes, dim)
     print(hnsw.population)
-
-    # hnsw.bulk_insert(nodes)
-    # test_knn_search(hnsw, vec_dim, k, ef)
 
 
 def test_small_world_in_layer0():
@@ -324,7 +302,6 @@ def test_small_world_in_layer0():
 
     nodes = []
     node_data = [
-        (1, [1.0, 0.0], 0),
         (3, [3.0, 0.0], 0),
         (8, [8.0, 0.0], 0),
         (4, [4.0, 0.0], 0),
@@ -337,6 +314,10 @@ def test_small_world_in_layer0():
         (10, [10.0, 0.0], 0),
         (12, [12.0, 0.0], 1),
         (13, [13.0, 0.0], 0),
+        (14, [14.0, 0.0], 0),
+        (1, [1.0, 0.0], 0),
+        (20, [20.0, 0.0], 0),
+        (30, [30.0, 0.0], 0),
     ]
     for id, vec, lvl in node_data:
         node = Node(id, vector=vec, level=lvl)
@@ -348,7 +329,7 @@ def test_small_world_in_layer0():
     print(f"\tentry point of hnsw {hnsw.entry_point}")
     print(f"\tmax_level of hnsw {hnsw.max_level}")
 
-    query_vector = [10, 0]
+    query_vector = [0.8, 0]
     query_node = Node(id="query", vector=query_vector, level=0)
 
     # Perform k-NN search.
@@ -359,7 +340,7 @@ def test_small_world_in_layer0():
     print("Query vector:", query_vector)
     print(f"Found {len(neighbors)} nearest neighbors")
     for neighbor in neighbors:
-        d = hnsw.distance(query_node.vector, neighbor.vector)
+        d = hnsw.distance(query_node.vector, neighbor.vector) ** 2
         print(
             f"\tNode {neighbor.id}<{neighbor.vector}> at {neighbor.level} with distance {d:.4f}"
         )
