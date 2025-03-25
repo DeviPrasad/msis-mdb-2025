@@ -23,12 +23,20 @@ def tiktoken_encoding_for_model(model_name):
 
 
 def tokenize(model_name, text):
-    encoding = tiktoken_encoding_for_model(model_name)
+    enc = tiktoken_encoding_for_model(model_name)
     return enc.encode(text)
 
 
+def decode(model_name, tokens):
+    enc = tiktoken_encoding_for_model(model_name)
+    orig = [enc.decode_single_token_bytes(token) for token in tokens]
+    print(orig)
+
+
 if __name__ == "__main__":
-    assert tiktoken_encoding_for_model("text-embedding-3-small") == "cl100k_base"
+    print(tiktoken_encoding_for_model("text-embedding-3-small"))
 
     tokens = tokenize("text-embedding-3-small", tt_ex_sentence)
     print(tokens)
+
+    decode("text-embedding-3-small", tokens)

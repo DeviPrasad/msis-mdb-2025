@@ -23,7 +23,9 @@ class Node:
         return f"Node({self.id, self.level})"
 
     def neighbor_ids(self):
-        return [v.id for v in self.neighbors]
+        for v in self.neighbors:
+            print(self.neighbors[v])
+        return [v for v in self.neighbors]
 
 
 class HNSW:
@@ -41,7 +43,7 @@ class HNSW:
         assert M > 0
         assert layer0_M >= M
         assert efConstruction > 1
-        assert L > 2
+        assert L > 0
 
         self.M = M
         # ml: Level multiplier = 1/ln(M), used in random level generation.
@@ -132,20 +134,14 @@ class HNSW:
             for lvl in range(q.level + 1):
                 q.neighbors[lvl] = []
             self.nodes[q.id] = q
+            print(f"\tinserted the first node {q} of layer_{q.level}")
             return
 
         # Step 1: Greedy search on layers above q.level.
-        if q.level < self.max_level:
-            cur_ep = self.entry_point
-            for level in range(self.max_level, q.level, -1):
-                candidates = self.search_layer(q, cur_ep, ef=1, level=level)
-                cur_ep = candidates[0]
-        else:
-            cur_ep = q
-            for level in range(self.max_level + 1, q.level + 1):
-                q.neighbors[level] = [self.entry_point]
-            self.entry_point = q
-            self.max_level = q.level
+        cur_ep = self.entry_point
+        for level in range(self.max_level, q.level, -1):
+            candidates = self.search_layer(q, cur_ep, ef=1, level=level)
+            cur_ep = candidates[0]
 
         # Step 2: For each layer from min(q.level, max_level) downto 0, insert q.
         for level in range(min(q.level, self.max_level), -1, -1):
@@ -155,6 +151,7 @@ class HNSW:
             # Use Mmax for layer 0; otherwise use M.
             M_param = self.Mmax if level == 0 else self.M
             neighbors = self.select_neighbors_heuristic(candidate_list, M_param, q)
+            print(f"inspecting {q} for {level} {q.neighbors} {neighbors}")
             q.neighbors[level] = neighbors
             # Add bidirectional links.
             for neighbor in neighbors:
@@ -171,6 +168,17 @@ class HNSW:
                     )
             cur_ep = q
         self.nodes[q.id] = q
+        #
+        if q.level > self.max_level:
+            self.max_level = q.level
+            self.entry_point = q
+
+    def farthest_distance(neighbors):
+        assert len(neighbors) > 0
+        for e, d in neighbors:
+            assert type(d) == "int"
+            assert isinstance(d, int)
+        max(neighbors, key=lambda x: x[1])[1]
 
     # -------------------------------------------------------------------------
     # Algorithm 2: SEARCH_LAYER(q, ep, ef, level)
@@ -184,35 +192,39 @@ class HNSW:
         """
         visited = set()
         candidate_list = []
-        result_set = []
+        nearest_neighbors = []
 
         d_ep = self.distance(q.vector, ep.vector)
         candidate_list.append((ep, d_ep))
-        result_set.append((ep, d_ep))
+        nearest_neighbors.append((ep, d_ep))
         visited.add(ep.id)
 
         candidate_list.sort(key=lambda x: x[1])
 
         while candidate_list:
-            current, current_dist = candidate_list.pop(0)
-            worst_dist = max(result_set, key=lambda x: x[1])[1]
-            if current_dist > worst_dist:
+            nearest_candidate, nearest_candidate_dist = candidate_list.pop(0)
+            farthest_neighbor_dist = max(nearest_neighbors, key=lambda x: x[1])[1]
+            if (
+                nearest_candidate_dist > farthest_neighbor_dist
+            ):  # all elements in W are evaluated
                 break
-            if level in current.neighbors:
-                for neighbor in current.neighbors[level]:
+            if level in nearest_candidate.neighbors:
+                for neighbor in nearest_candidate.neighbors[level]:
                     if neighbor.id in visited:
                         continue
                     visited.add(neighbor.id)
-                    d_neighbor = self.distance(q.vector, neighbor.vector)
+                    dist_neighbor = self.distance(q.vector, neighbor.vector)
                     if (
-                        len(result_set) < ef
-                        or d_neighbor < max(result_set, key=lambda x: x[1])[1]
+                        dist_neighbor < max(nearest_neighbors, key=lambda x: x[1])[1]
+                        or len(nearest_neighbors) < ef
                     ):
-                        candidate_list.append((neighbor, d_neighbor))
-                        result_set.append((neighbor, d_neighbor))
-                        result_set = sorted(result_set, key=lambda x: x[1])[:ef]
+                        candidate_list.append((neighbor, dist_neighbor))
+                        nearest_neighbors.append((neighbor, dist_neighbor))
+                        nearest_neighbors = sorted(
+                            nearest_neighbors, key=lambda x: x[1]
+                        )[:ef]
                         candidate_list = sorted(candidate_list, key=lambda x: x[1])
-        return [node for (node, d) in sorted(result_set, key=lambda x: x[1])]
+        return [node for (node, d) in sorted(nearest_neighbors, key=lambda x: x[1])]
 
     # -------------------------------------------------------------------------
     # Algorithm 4: SELECT_NEIGHBORS_HEURISTIC(candidate_list, M, q)
@@ -250,6 +262,7 @@ class HNSW:
         # Greedy descent: from the top layer down to layer 1.
         for level in range(self.max_level, 0, -1):
             candidates = self.search_layer(q, cur_ep, ef=1, level=level)
+            print(f"\tcandidates at level {level} {candidates}")
             cur_ep = candidates[0]
         candidate_list = self.search_layer(q, cur_ep, ef=ef, level=0)
         candidate_list.sort(key=lambda node: self.distance(q.vector, node.vector))
@@ -280,7 +293,7 @@ def test_knn_search(hnsw, vec_dim, k, ef):
         print(f"  Node {neighbor.id} at {neighbor.vector} with distance {d:.4f}")
 
 
-if __name__ == "__main__":
+def test_randomized_vectors_hnsw():
     # parameters in the spirit of pgvector:
     M = 16
     L = 5
@@ -301,3 +314,56 @@ if __name__ == "__main__":
 
     # hnsw.bulk_insert(nodes)
     # test_knn_search(hnsw, vec_dim, k, ef)
+
+
+def test_small_world_in_layer0():
+    M = 16
+    L = 2
+    layer0_M = 32
+    efConstruction = 32
+
+    nodes = []
+    node_data = [
+        (1, [1.0, 0.0], 0),
+        (3, [3.0, 0.0], 0),
+        (8, [8.0, 0.0], 0),
+        (4, [4.0, 0.0], 0),
+        (5, [5.0, 0.0], 0),
+        (11, [11.0, 0.0], 0),
+        (6, [6.0, 1.0], 0),
+        (2, [2.0, 0.0], 0),
+        (7, [7.0, 0.0], 0),
+        (9, [9.0, 0.0], 0),
+        (10, [10.0, 0.0], 0),
+        (12, [12.0, 0.0], 1),
+        (13, [13.0, 0.0], 0),
+    ]
+    for id, vec, lvl in node_data:
+        node = Node(id, vector=vec, level=lvl)
+        nodes.append(node)
+
+    print(f"Node: {nodes}")
+    hnsw = HNSW.new(M, layer0_M, efConstruction, L)
+    hnsw.bulk_insert(nodes)
+    print(f"\tentry point of hnsw {hnsw.entry_point}")
+    print(f"\tmax_level of hnsw {hnsw.max_level}")
+
+    query_vector = [10, 0]
+    query_node = Node(id="query", vector=query_vector, level=0)
+
+    # Perform k-NN search.
+    k = 4  # Number of nearest neighbors to search for.
+    ef = 16  # Candidate list size during search (efSea
+    neighbors = hnsw.knn_search(query_node, k, ef)
+
+    print("Query vector:", query_vector)
+    print(f"Found {len(neighbors)} nearest neighbors")
+    for neighbor in neighbors:
+        d = hnsw.distance(query_node.vector, neighbor.vector)
+        print(
+            f"\tNode {neighbor.id}<{neighbor.vector}> at {neighbor.level} with distance {d:.4f}"
+        )
+
+
+if __name__ == "__main__":
+    test_small_world_in_layer0()

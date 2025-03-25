@@ -10,6 +10,12 @@ $ export OPENAI_API_KEY=<your-api-key>
 import os
 from openai import OpenAI
 
+MODEL_SMALL = "text-embedding-3-small"
+MODEL_LARGE = "text-embedding-3-large"
+MODEL_ADA = "text-embedding-ada-002"
+
+MODEL_NAME = MODEL_ADA
+
 
 def embed_loop_text(cl):
     py_loop_text = """
@@ -27,8 +33,10 @@ def embed_loop_text(cl):
                 return (False, d, "")
         return (True, 0, "odd")
     """
-    resp = cl.embeddings.create(input=py_loop_text, model="text-embedding-3-small")
-    print(resp.data[0].embedding)
+    resp = cl.embeddings.create(input=py_loop_text, model=MODEL_NAME)
+    embedding = resp.data[0].embedding
+    print(len(embedding))
+    # print(resp.data[0].embedding)
 
 
 if __name__ == "__main__":

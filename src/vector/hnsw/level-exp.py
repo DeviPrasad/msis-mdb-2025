@@ -27,7 +27,7 @@ if __name__ == "__main__":
     np.random.seed()
     # Generate a few sample levels to see the distribution
     highest_level = 0
-    _ = [get_random_level() for _ in range(1024 * 1024 * 32)]
+    _ = [get_random_level() for _ in range(32)]
     print(population[: highest_level + 1])
 
 

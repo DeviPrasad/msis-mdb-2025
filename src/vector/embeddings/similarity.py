@@ -3,16 +3,20 @@ import numpy as np
 from openai import OpenAI
 import tiktoken
 
+MODEL_SMALL = "text-embedding-3-small"
+MODEL_ADA = "text-embedding-ada-002"
+
+MODEL_NAME = MODEL_SMALL
+
 
 def embed_loop_text(cl):
     py_loop_text = """
-    # python code to determine if 'x' is a prime number.
-    def is_prime(x):
+    # tell if a number is xyz
+    def is_it_xyz(x):
         import math
         if not (isinstance(x, int) and x > 1):
             raise Exception("bad argument")
         if x == 2:
-            # 2 is an even prime
             return (True, 2, "even")
         if x % 2 == 0:
             return (False, 2, "")
@@ -23,21 +27,19 @@ def embed_loop_text(cl):
                 return (False, d, "")
         return (True, 0, "odd")
     """
-    resp = cl.embeddings.create(input=py_loop_text, model="text-embedding-3-small")
+    resp = cl.embeddings.create(input=py_loop_text, model=MODEL_NAME)
     # print(resp.data[0].embedding)
     return resp.data[0].embedding
 
 
 def embed_text(cl, text):
-    resp = cl.embeddings.create(input=text, model="text-embedding-3-small")
+    resp = cl.embeddings.create(input=text, model=MODEL_NAME)
     return (resp, resp.data[0].embedding)
 
 
 def embed_query_prime_number(cl):
-    feature_query_prime_number = "python code for testing prime numbers"
-    resp = cl.embeddings.create(
-        input=feature_query_prime_number, model="text-embedding-3-small"
-    )
+    feature_query_prime_number = "test if it is a set"
+    resp = cl.embeddings.create(input=feature_query_prime_number, model=MODEL_NAME)
     return resp.data[0].embedding
 
 
@@ -81,13 +83,13 @@ def check_similarity(cl):
     prime_number_query_vec = np.array(prime_num_embedding)
     iteration_vec = np.array(iteration_embedding)
 
-    cos_code_prime_num = cosine_similarity(py_code_vec, prime_number_query_vec)
     cos_code_loop = cosine_similarity(py_code_vec, loop_vec)
-    cos_loop_prime_num = cosine_similarity(loop_vec, prime_number_query_vec)
-    cos_loop_iteration = cosine_similarity(iteration_vec, loop_vec)
+    cos_code_prime_num = cosine_similarity(py_code_vec, prime_number_query_vec)
+    cos_loop_iteration = cosine_similarity(loop_vec, iteration_vec)
+    cos_code_iteration = cosine_similarity(iteration_vec, py_code_vec)
 
     print(
-        f"code-loop {cos_code_loop}, code-prime {cos_code_prime_num}, loop-prime {cos_loop_prime_num}, loop-iteration {cos_loop_iteration}"
+        f"code-loop {cos_code_loop}, code-prime {cos_code_prime_num}, loop-iteration {cos_loop_iteration}, code-iteration {cos_code_iteration}"
     )
 
     print(f"self-similar: {cosine_similarity(loop_vec, loop_vec)}")
@@ -99,8 +101,8 @@ def test_openai_embeddings():
             "OPENAI_API_KEY", "<your OpenAI API key if not set as an env var>"
         )
     )
-    test_cs_edu(client)
-    # check_similarity(client)
+    # test_cs_edu(client)
+    check_similarity(client)
 
 
 def test_cosine_similarity():
