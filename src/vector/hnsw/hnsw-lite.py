@@ -137,25 +137,31 @@ class HNSW:
             return
 
         # Step 1: Greedy search on layers above q.level.
-        cur_ep = self.entry_point
+        # 5. for lc ← L … l+1
+        ep = self.entry_point
         for level in range(self.max_level, q.level, -1):
-            candidates = self.search_layer(q, cur_ep, ef=1, level=level)
-            cur_ep = candidates[0]
+            # 6. W ← SEARCH-LAYER(q, ep, ef=1, lc)
+            nearest_nodes = self.search_layer(q, ep, ef=1, level=level)
+            # 7. ep ← get the nearest element from W to q
+            ep = nearest_nodes[0]
 
-        # Step 2: For each layer from min(q.level, max_level) downto 0, insert q.
+        # Step 2: For each layer from min(q.level, max_level) down to 0, insert q.
+        # 8. for lc ← min(L, l) … 0 (inclusive)
         for level in range(min(q.level, self.max_level), -1, -1):
-            candidate_list = self.search_layer(
-                q, cur_ep, ef=self.efConstruction, level=level
-            )
+            # 9. W ← SEARCH-LAYER(q, ep, efConstruction, lc)
+            candidates = self.search_layer(q, ep, ef=self.efConstruction, level=level)
             # Use Mmax for layer 0; otherwise use M.
             M_param = self.Mmax if level == 0 else self.M
-            neighbors = self.select_neighbors_heuristic(candidate_list, M_param, q)
+            # 10. neighbors ← SELECT-NEIGHBORS(q, W, M, lc) // alg. 3 or alg. 4
+            neighbors = self.select_neighbors_heuristic(candidates, M_param, q)
+            # 11. add bidirectional connections from neighbors to q at layer lc
             q.neighbors[level] = neighbors
-            # Add bidirectional links.
             for neighbor in neighbors:
                 if level not in neighbor.neighbors:
                     neighbor.neighbors[level] = []
                 neighbor.neighbors[level].append(q)
+            # 12. for each e ∈ neighbors // shrink connections if needed
+            for neighbor in neighbors:
                 if len(neighbor.neighbors[level]) > (
                     self.Mmax if level == 0 else self.M
                 ):
@@ -164,7 +170,7 @@ class HNSW:
                         (self.Mmax if level == 0 else self.M),
                         neighbor,
                     )
-            cur_ep = q
+            ep = candidates[0]
         self.nodes[q.id] = q
         #
         if q.level > self.max_level:
@@ -311,14 +317,14 @@ def test_small_world_in_layer0():
     nodes = []
     node_data = [
         (3, [3.0, 0.0], 0),
-        (8, [8.0, 0.0], 0),
+        (8, [8.0, 0.0], 1),
         (4, [4.0, 0.0], 0),
         (5, [5.0, 0.0], 0),
-        (11, [11.0, 0.0], 0),
+        (11, [11.0, 0.0], 1),
         (6, [6.0, 1.0], 0),
         (2, [2.0, 0.0], 0),
         (7, [7.0, 0.0], 0),
-        (9, [9.0, 0.0], 0),
+        (9, [9.0, 0.0], 2),
         (10, [10.0, 0.0], 0),
         (12, [12.0, 0.0], 1),
         (13, [13.0, 0.0], 0),
@@ -337,7 +343,7 @@ def test_small_world_in_layer0():
     print(f"\tentry point of hnsw {hnsw.entry_point}")
     print(f"\tmax_level of hnsw {hnsw.max_level}")
 
-    query_vector = [0.8, 0]
+    query_vector = [9.8, 0]
     query_node = Node(id="query", vector=query_vector, level=0)
 
     # Perform k-NN search.
