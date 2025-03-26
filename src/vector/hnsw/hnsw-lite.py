@@ -184,40 +184,51 @@ class HNSW:
         searches for the nearest neighbors of query node q starting from entry point ep.
         returns a list of nodes sorted by distance to q.
         """
-        visited = set()
-        candidate_list = []
-        nearest_neighbors = []
+        visited = set()  # v // set of visited elements
+        candidate_list = []  # C // set of candidates
+        nearest_neighbors = []  # W // dynamic list of found nearest neighbors
 
         d_ep = self.distance(q.vector, ep.vector)
-        candidate_list.append((ep, d_ep))
-        nearest_neighbors.append((ep, d_ep))
-        visited.add(ep.id)
+
+        visited.add(ep.id)  # 1. v ← ep
+        candidate_list.append((ep, d_ep))  # 2. C ← ep
+        nearest_neighbors.append((ep, d_ep))  # 3. W ← ep
 
         candidate_list.sort(key=lambda x: x[1])
 
-        while candidate_list:
+        while candidate_list:  # 4. while │C│ > 0
+            # 5. c ← extract nearest element from C to q
             nearest_candidate, nearest_candidate_dist = candidate_list.pop(0)
+            # 6. f ← get furthest element from W to q
             farthest_neighbor_dist = max(nearest_neighbors, key=lambda x: x[1])[1]
-            if (
-                nearest_candidate_dist > farthest_neighbor_dist
-            ):  # all elements in W are evaluated
-                break
-            if level in nearest_candidate.neighbors:
+            # 7. if distance(c, q) > distance(f, q)
+            if nearest_candidate_dist > farthest_neighbor_dist:
+                break  # 8. all elements in W are evaluated
+            if level in nearest_candidate.neighbors:  # 9. neighborhood(c) at layer lc
+                # 9. for each e ∈ neighborhood(c) at layer lc // update C and W
                 for neighbor in nearest_candidate.neighbors[level]:
+                    # 10. ignore e if it is already visited/processed
                     if neighbor.id in visited:
                         continue
+                    # 11. if e ∉ v then v ← v ⋃ e
                     visited.add(neighbor.id)
+                    # distance(e, q)
                     dist_neighbor = self.distance(q.vector, neighbor.vector)
-                    if (
-                        dist_neighbor < max(nearest_neighbors, key=lambda x: x[1])[1]
-                        or len(nearest_neighbors) < ef
-                    ):
+                    # 12. f ← get furthest element from W to q
+                    f = max(nearest_neighbors, key=lambda x: x[1])[1]
+                    # 13. if distance(e, q) < distance(f, q) or │W│ < ef
+                    if dist_neighbor < f or len(nearest_neighbors) < ef:
+                        # 14. C ← C ⋃ e
                         candidate_list.append((neighbor, dist_neighbor))
+                        # 15. W ← W ⋃ e
                         nearest_neighbors.append((neighbor, dist_neighbor))
+                        # 16. if │W│ > ef
+                        # 17. remove furthest element from W to q
                         nearest_neighbors = sorted(
                             nearest_neighbors, key=lambda x: x[1]
                         )[:ef]
                         candidate_list = sorted(candidate_list, key=lambda x: x[1])
+        # 18. return W
         return [node for (node, d) in sorted(nearest_neighbors, key=lambda x: x[1])]
 
     # Algorithm 4: SELECT_NEIGHBORS_HEURISTIC(candidate_list, M, q)
