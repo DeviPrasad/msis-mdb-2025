@@ -1,0 +1,55 @@
+
+BDA 5202 - Lab Test Questions.
+Date: 01-April-2025.
+Time: 1:30 pm to 4 pm.
+Marks: 50
+
+
+Section A. General Instructions and  Problem Statement.
+---------------------------------------------------------
+
+Carefully analyze the task assigned to you, and determine the
+data schema that you would want to work with. Select a reasonable
+proportion of work.
+
+
+(Q1) CO1 (10 marks)
+Analyze the relational schema and understand the structure of the data.
+Keeping the domain in mind, define schema, collections, and documents
+in MongoDB.
+
+(Q2) CO2 (25 marks)
+From the design in Q1, give a testable implementation in Python.
+Use necessary python libraries to import data and to populate data.
+Write a few tests.
+
+(Q3) CO3 (15 marks)
+Evaluate the differences between the MongoDB defintions and potentially
+SQL definitions. Do you think a document oriented database makes sense
+in the problem domain you considered? Give educated and informed answers.
+
+
+
+
+Section B. Tasks and their Defintions.
+----------------------------------------
+
+First 8 Registration Numbers - 241058001 to 241058016 (both including)
+1. Oracle Sample DB - Sales History
+https://github.com/oracle-samples/db-sample-schemas/tree/main/sales_history
+
+
+Next 8 Registration Numbers - 241058017 to 241058025 (both including)
+2. Oracle Sample DB - Customer Orders
+https://github.com/oracle-samples/db-sample-schemas/tree/main/customer_orders
+
+
+Next 8 Registration Numbers - 241058026 to 241058037 (both including)
+3. HDFC Home Loan Application, etc
+https://www.hdfc.com/checklist/home-loan-download-forms
+
+
+Last 8 Registration Numbers - 241058038 to 241058045 (both including)
+4. Passport Application, etc
+https://portal2.passportindia.gov.in/AppOnlineProject/online/printForm
+
